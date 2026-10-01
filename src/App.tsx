@@ -18,7 +18,8 @@ import {
   syncSaveRegistration, 
   syncUpdateRegStatus, 
   syncDeleteRegistration,
-  seedDatabaseIfEmpty
+  seedDatabaseIfEmpty,
+  syncAllEvents
 } from './services/dbService';
 import { Navbar } from './components/Navbar';
 import { RegistrationForm } from './components/RegistrationForm';
@@ -199,6 +200,15 @@ export default function App() {
     }
   };
 
+  const handleForceSyncCloud = async () => {
+    try {
+      await syncAllEvents(events);
+    } catch (err) {
+      console.error('Failed to force sync all events to cloud:', err);
+      throw err;
+    }
+  };
+
   const handleSelectAthleteForEvent = (athleteId: string) => {
     setActiveTab('register');
   };
@@ -257,6 +267,7 @@ export default function App() {
               onUpdateRegStatus={handleUpdateRegStatus}
               onDeleteRegistration={handleDeleteRegistration}
               onViewRegCard={(reg) => setViewingCardReg(reg)}
+              onForceSyncCloud={handleForceSyncCloud}
             />
           ) : (
             <div className="max-w-md mx-auto py-16 px-4 text-center">

@@ -5,7 +5,7 @@ import { exportRegistrationsToExcel } from '../utils/excelExport';
 import { 
   Plus, Edit, Trash2, Calendar, Users, DollarSign, Download, Filter, 
   Search, CheckCircle2, XCircle, AlertCircle, Eye, Printer, Award, 
-  FileSpreadsheet, ListPlus, X, AlertTriangle, Layers
+  FileSpreadsheet, ListPlus, X, AlertTriangle, Layers, Cloud, RefreshCw, Check
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -20,6 +20,7 @@ interface AdminPanelProps {
   onUpdateRegStatus: (regId: string, status: 'paid' | 'pending' | 'cancelled') => void;
   onDeleteRegistration: (id: string) => void;
   onViewRegCard: (reg: RegistrationEntry) => void;
+  onForceSyncCloud?: () => Promise<void>;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -33,9 +34,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onToggleAthleteStatus,
   onUpdateRegStatus,
   onDeleteRegistration,
-  onViewRegCard
+  onViewRegCard,
+  onForceSyncCloud,
 }) => {
   const [adminTab, setAdminTab] = useState<'registrations' | 'events' | 'athletes'>('registrations');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncSuccess, setSyncSuccess] = useState(false);
+
+  const handleSyncCloud = async () => {
+    if (!onForceSyncCloud) return;
+    setIsSyncing(true);
+    try {
+      await onForceSyncCloud();
+      setSyncSuccess(true);
+      setTimeout(() => setSyncSuccess(false), 3000);
+    } catch (e) {
+      console.error('Failed to sync to cloud:', e);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
   
   // Filter states
   const [selectedEventFilter, setSelectedEventFilter] = useState<string>('all');
@@ -313,7 +331,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
+          {onForceSyncCloud && (
+            <button
+              onClick={handleSyncCloud}
+              disabled={isSyncing}
+              className="px-3.5 py-2 text-xs font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
+              title="Kirim dan sinkronkan semua event ke Cloud Firestore agar HP lain langsung terupdate"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Menyinkronkan...' : syncSuccess ? 'Tersinkronkan ke Semua HP!' : 'Sinkronkan ke Semua HP'}</span>
+            </button>
+          )}
+
           {adminTab === 'events' && (
             <button
               onClick={handleOpenNewEvent}

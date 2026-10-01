@@ -17,6 +17,14 @@ const ATHLETES_COL = 'athletes';
 const REGS_COL = 'registrations';
 
 /**
+ * Deep sanitization function to strip any `undefined` properties.
+ * Firestore strictly forbids `undefined` field values and will throw an error if present.
+ */
+export function cleanForFirestore<T>(data: T): T {
+  return JSON.parse(JSON.stringify(data));
+}
+
+/**
  * Real-time listener for Swimming Events across all devices
  */
 export const subscribeEvents = (
@@ -39,7 +47,7 @@ export const subscribeEvents = (
         }
       },
       (error) => {
-        console.error('Error listening to events:', error);
+        console.error('Error listening to events in Firestore:', error);
         if (onError) onError(error);
       }
     );
@@ -72,7 +80,7 @@ export const subscribeAthletes = (
         }
       },
       (error) => {
-        console.error('Error listening to athletes:', error);
+        console.error('Error listening to athletes in Firestore:', error);
         if (onError) onError(error);
       }
     );
@@ -105,7 +113,7 @@ export const subscribeRegistrations = (
         }
       },
       (error) => {
-        console.error('Error listening to registrations:', error);
+        console.error('Error listening to registrations in Firestore:', error);
         if (onError) onError(error);
       }
     );
@@ -119,8 +127,18 @@ export const subscribeRegistrations = (
  * Upsert Event to Firestore (syncs to all devices)
  */
 export const syncSaveEvent = async (event: SwimmingEvent): Promise<void> => {
+  const cleaned = cleanForFirestore(event);
   const docRef = doc(db, EVENTS_COL, event.id);
-  await setDoc(docRef, event, { merge: true });
+  await setDoc(docRef, cleaned, { merge: true });
+};
+
+/**
+ * Bulk save all events to cloud Firestore
+ */
+export const syncAllEvents = async (events: SwimmingEvent[]): Promise<void> => {
+  for (const ev of events) {
+    await syncSaveEvent(ev);
+  }
 };
 
 /**
@@ -135,8 +153,9 @@ export const syncDeleteEvent = async (eventId: string): Promise<void> => {
  * Upsert Athlete to Firestore
  */
 export const syncSaveAthlete = async (athlete: Athlete): Promise<void> => {
+  const cleaned = cleanForFirestore(athlete);
   const docRef = doc(db, ATHLETES_COL, athlete.id);
-  await setDoc(docRef, athlete, { merge: true });
+  await setDoc(docRef, cleaned, { merge: true });
 };
 
 /**
@@ -157,8 +176,9 @@ export const syncToggleAthleteStatus = async (
  * Save Registration to Firestore
  */
 export const syncSaveRegistration = async (reg: RegistrationEntry): Promise<void> => {
+  const cleaned = cleanForFirestore(reg);
   const docRef = doc(db, REGS_COL, reg.id);
-  await setDoc(docRef, reg, { merge: true });
+  await setDoc(docRef, cleaned, { merge: true });
 };
 
 /**
@@ -203,7 +223,7 @@ export const seedDatabaseIfEmpty = async (
     if (eventsSnap.empty) {
       console.log('Seeding default events to cloud Firestore...');
       for (const ev of defaultEvents) {
-        await setDoc(doc(db, EVENTS_COL, ev.id), ev);
+        await setDoc(doc(db, EVENTS_COL, ev.id), cleanForFirestore(ev));
       }
     }
 
@@ -211,7 +231,7 @@ export const seedDatabaseIfEmpty = async (
     if (athletesSnap.empty) {
       console.log('Seeding default athletes to cloud Firestore...');
       for (const ath of defaultAthletes) {
-        await setDoc(doc(db, ATHLETES_COL, ath.id), ath);
+        await setDoc(doc(db, ATHLETES_COL, ath.id), cleanForFirestore(ath));
       }
     }
 
@@ -219,7 +239,7 @@ export const seedDatabaseIfEmpty = async (
     if (regsSnap.empty) {
       console.log('Seeding default registrations to cloud Firestore...');
       for (const reg of defaultRegistrations) {
-        await setDoc(doc(db, REGS_COL, reg.id), reg);
+        await setDoc(doc(db, REGS_COL, reg.id), cleanForFirestore(reg));
       }
     }
   } catch (err) {

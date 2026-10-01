@@ -90,7 +90,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Zone 3: 1-2 primary actions */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200" title="Terhubung secara live ke Cloud Database">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Cloud Real-time</span>
+            </div>
+
             {isAdmin ? (
               <div className="flex items-center gap-2">
                 <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200">
