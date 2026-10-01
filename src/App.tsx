@@ -7,6 +7,19 @@ import React, { useState, useEffect } from 'react';
 import { SwimmingEvent, Athlete, RegistrationEntry } from './types';
 import { RAW_ATHLETE_DATA } from './data/initialAthletes';
 import { INITIAL_EVENTS, INITIAL_REGISTRATIONS } from './data/initialEvents';
+import { 
+  subscribeEvents, 
+  subscribeAthletes, 
+  subscribeRegistrations, 
+  syncSaveEvent, 
+  syncDeleteEvent, 
+  syncSaveAthlete, 
+  syncToggleAthleteStatus, 
+  syncSaveRegistration, 
+  syncUpdateRegStatus, 
+  syncDeleteRegistration,
+  seedDatabaseIfEmpty
+} from './services/dbService';
 import { Navbar } from './components/Navbar';
 import { RegistrationForm } from './components/RegistrationForm';
 import { EventScheduleView } from './components/EventScheduleView';
@@ -22,7 +35,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
 
-  // Core Data States with localStorage persistence
+  // Core Data States with localStorage persistence as offline cache
   const [events, setEvents] = useState<SwimmingEvent[]>(() => {
     const saved = localStorage.getItem('asc_events');
     return saved ? JSON.parse(saved) : INITIAL_EVENTS;
@@ -41,6 +54,39 @@ export default function App() {
   // Modal state for viewing invoice / registration card
   const [viewingCardReg, setViewingCardReg] = useState<RegistrationEntry | null>(null);
 
+  // Initial cloud seed & Real-time cross-device synchronization with Firestore
+  useEffect(() => {
+    // 1. Ensure initial cloud database is seeded if empty
+    seedDatabaseIfEmpty(INITIAL_EVENTS, RAW_ATHLETE_DATA, INITIAL_REGISTRATIONS);
+
+    // 2. Real-time subscription to events across all devices
+    const unsubEvents = subscribeEvents((liveEvents) => {
+      if (liveEvents && liveEvents.length > 0) {
+        setEvents(liveEvents);
+      }
+    });
+
+    // 3. Real-time subscription to athletes across all devices
+    const unsubAthletes = subscribeAthletes((liveAthletes) => {
+      if (liveAthletes && liveAthletes.length > 0) {
+        setAthletes(liveAthletes);
+      }
+    });
+
+    // 4. Real-time subscription to registrations across all devices
+    const unsubRegs = subscribeRegistrations((liveRegs) => {
+      if (liveRegs) {
+        setRegistrations(liveRegs);
+      }
+    });
+
+    return () => {
+      unsubEvents();
+      unsubAthletes();
+      unsubRegs();
+    };
+  }, []);
+
   // Sync to localStorage
   useEffect(() => {
     localStorage.setItem('asc_events', JSON.stringify(events));
@@ -54,46 +100,77 @@ export default function App() {
     localStorage.setItem('asc_registrations', JSON.stringify(registrations));
   }, [registrations]);
 
-  // Handlers
-  const handleCompleteRegistration = (newReg: RegistrationEntry) => {
+  // Handlers with Cloud Cross-Device Synchronization
+  const handleCompleteRegistration = async (newReg: RegistrationEntry) => {
     setRegistrations(prev => [newReg, ...prev]);
     // Directly display the Official Registration Invoice to confirm to Admin
     setViewingCardReg(newReg);
+    try {
+      await syncSaveRegistration(newReg);
+    } catch (err) {
+      console.error('Failed to sync new registration to cloud:', err);
+    }
   };
 
-  const handleAddEvent = (evt: SwimmingEvent) => {
+  const handleAddEvent = async (evt: SwimmingEvent) => {
     setEvents(prev => [evt, ...prev]);
+    try {
+      await syncSaveEvent(evt);
+    } catch (err) {
+      console.error('Failed to sync new event to cloud:', err);
+    }
   };
 
-  const handleUpdateEvent = (evt: SwimmingEvent) => {
+  const handleUpdateEvent = async (evt: SwimmingEvent) => {
     setEvents(prev => prev.map(e => (e.id === evt.id ? evt : e)));
+    try {
+      await syncSaveEvent(evt);
+    } catch (err) {
+      console.error('Failed to sync updated event to cloud:', err);
+    }
   };
 
-  const handleDeleteEvent = (id: string) => {
+  const handleDeleteEvent = async (id: string) => {
     setEvents(prev => prev.filter(e => e.id !== id));
+    try {
+      await syncDeleteEvent(id);
+    } catch (err) {
+      console.error('Failed to delete event from cloud:', err);
+    }
   };
 
-  const handleAddAthlete = (ath: Athlete) => {
+  const handleAddAthlete = async (ath: Athlete) => {
     setAthletes(prev => [ath, ...prev]);
+    try {
+      await syncSaveAthlete(ath);
+    } catch (err) {
+      console.error('Failed to sync new athlete to cloud:', err);
+    }
   };
 
-  const handleToggleAthleteStatus = (id: string) => {
+  const handleToggleAthleteStatus = async (id: string) => {
+    let nextStatus = true;
     setAthletes(prev =>
       prev.map(a => {
         if (a.id === id) {
-          const willBeActive = !a.isActive;
+          nextStatus = !a.isActive;
           return {
             ...a,
-            isActive: willBeActive,
-            trainingSchedule: willBeActive ? 'Minggu' : 'Rest'
+            isActive: nextStatus,
+            trainingSchedule: nextStatus ? 'Minggu' : 'Rest'
           };
         }
         return a;
       })
     );
+    try {
+      await syncToggleAthleteStatus(id, nextStatus);
+    } catch (err) {
+      console.error('Failed to sync athlete status to cloud:', err);
+    }
   };
 
-  const handleUpdateRegStatus = (regId: string, status: 'paid' | 'pending' | 'cancelled') => {
+  const handleUpdateRegStatus = async (regId: string, status: 'paid' | 'pending' | 'cancelled') => {
     setRegistrations(prev =>
       prev.map(r => {
         if (r.id === regId) {
@@ -106,10 +183,20 @@ export default function App() {
         return r;
       })
     );
+    try {
+      await syncUpdateRegStatus(regId, status);
+    } catch (err) {
+      console.error('Failed to sync reg status to cloud:', err);
+    }
   };
 
-  const handleDeleteRegistration = (regId: string) => {
+  const handleDeleteRegistration = async (regId: string) => {
     setRegistrations(prev => prev.filter(r => r.id !== regId));
+    try {
+      await syncDeleteRegistration(regId);
+    } catch (err) {
+      console.error('Failed to delete registration from cloud:', err);
+    }
   };
 
   const handleSelectAthleteForEvent = (athleteId: string) => {

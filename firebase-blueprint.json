@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "SwimmingEvent": {
+      "title": "SwimmingEvent",
+      "description": "Jadwal dan rincian kejuaraan renang resmi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "organizer": { "type": "string" },
+        "venuePool": { "type": "string" },
+        "location": { "type": "string" },
+        "eventDate": { "type": "string" },
+        "registrationDeadline": { "type": "string" },
+        "feePerStroke": { "type": "number" },
+        "coachAccommodationFee": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "title", "eventDate", "feePerStroke", "status"]
+    },
+    "Athlete": {
+      "title": "Athlete",
+      "description": "Data master atlet Acharya SC",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "gender": { "type": "string" },
+        "trainingSchedule": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "fullName", "birthDate", "gender", "isActive"]
+    },
+    "RegistrationEntry": {
+      "title": "RegistrationEntry",
+      "description": "Data pendaftaran atlet pada kejuaraan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "athleteId": { "type": "string" },
+        "athleteName": { "type": "string" },
+        "eventId": { "type": "string" },
+        "eventTitle": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "paymentStatus": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "athleteId", "athleteName", "eventId", "totalAmount", "paymentStatus"]
+    }
+  },
+  "firestore": {
+    "/events/{eventId}": {
+      "schema": "SwimmingEvent",
+      "description": "Daftar kejuaraan renang yang tersedia"
+    },
+    "/athletes/{athleteId}": {
+      "schema": "Athlete",
+      "description": "Data master atlet renang klub"
+    },
+    "/registrations/{registrationId}": {
+      "schema": "RegistrationEntry",
+      "description": "Pendaftaran kejuaraan peserta"
+    }
+  }
+}
