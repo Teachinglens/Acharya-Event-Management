@@ -1,0 +1,8 @@
+{
+  "name": "Acharya Event Management",
+  "description": "Portal Resmi Pendaftaran Kejuaraan Renang & Manajemen Event Khusus Atlet Acharya Swimming Club Pandeglang.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
