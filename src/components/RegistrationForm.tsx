@@ -24,13 +24,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
   const [selectedStrokeIds, setSelectedStrokeIds] = useState<string[]>([]);
   const [seedTimes, setSeedTimes] = useState<Record<string, string>>({});
   const [parentContact, setParentContact] = useState<string>('');
-  const [showActiveOnly, setShowActiveOnly] = useState<boolean>(true);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Filter athletes: ONLY active ones by default (Rest means not active as requested!)
+  // Filter athletes (all athletes are official active athletes from Sheet)
   const filteredAthletes = useMemo(() => {
     return athletes.filter(a => {
-      if (showActiveOnly && !a.isActive) return false;
       if (!athleteSearchTerm.trim()) return true;
       const term = athleteSearchTerm.toLowerCase();
       return (
@@ -39,7 +37,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
         (a.school && a.school.toLowerCase().includes(term))
       );
     });
-  }, [athletes, showActiveOnly, athleteSearchTerm]);
+  }, [athletes, athleteSearchTerm]);
 
   // Selected event
   const currentEvent = useMemo(() => events.find(e => e.id === selectedEventId) || openEvents[0], [events, selectedEventId, openEvents]);
@@ -224,16 +222,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <label className="text-xs font-medium text-slate-600 flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showActiveOnly}
-                  onChange={(e) => setShowActiveOnly(e.target.checked)}
-                  className="rounded text-blue-600 focus:ring-blue-500"
-                />
-                <span>Hanya Tampilkan Atlet Aktif ({athletes.filter(a => a.isActive).length})</span>
-              </label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{athletes.length} Atlet Aktif (Sheet Resmi)</span>
+              </span>
             </div>
           </div>
 

@@ -15,45 +15,6 @@ export const RAW_ATHLETE_DATA: Athlete[] = [
     heightCm: "103"
   },
   {
-    id: "ASC.0623.002",
-    fullName: "Aqlan Muhammad Attahya",
-    birthDate: "04/05/2012",
-    gender: "Laki-laki",
-    school: "Sdit irsyadul ibad",
-    parentName: "Halim perdana kesuma",
-    parentPhone: "081321799615",
-    parentJob: "Pegawai BUMN",
-    trainingSchedule: "Rest",
-    isActive: false,
-    heightCm: "150"
-  },
-  {
-    id: "ASC.0623.003",
-    fullName: "Aruna Athiyaa Aldebaran",
-    birthDate: "02/05/2015",
-    gender: "Perempuan",
-    school: "Sdit irsyadul ibad",
-    parentName: "Halim perdana kesuma",
-    parentPhone: "081321799615",
-    parentJob: "Pegawai bumn",
-    trainingSchedule: "Rest",
-    isActive: false,
-    heightCm: "120"
-  },
-  {
-    id: "ASC.0623.004",
-    fullName: "Atharva Carstenzs Arrasyid",
-    birthDate: "10/06/2017",
-    gender: "Laki-laki",
-    school: "Sdit irsyadul ibad",
-    parentName: "Halim perdana kesuma",
-    parentPhone: "081321799615",
-    parentJob: "Pegawai bumn",
-    trainingSchedule: "Rest",
-    isActive: false,
-    heightCm: "110"
-  },
-  {
     id: "ASC.0723.006",
     fullName: "Syahqira Talita Lubna",
     birthDate: "19/02/2014",

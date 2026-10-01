@@ -6,9 +6,10 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // Athletes collection
+    // Athletes collection (Read-only master data from official Sheet)
     match /athletes/{athleteId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if false;
     }
 
     // Registrations collection

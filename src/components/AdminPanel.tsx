@@ -15,8 +15,6 @@ interface AdminPanelProps {
   onAddEvent: (evt: SwimmingEvent) => void;
   onUpdateEvent: (evt: SwimmingEvent) => void;
   onDeleteEvent: (id: string) => void;
-  onAddAthlete: (athlete: Athlete) => void;
-  onToggleAthleteStatus: (id: string) => void;
   onUpdateRegStatus: (regId: string, status: 'paid' | 'pending' | 'cancelled') => void;
   onDeleteRegistration: (id: string) => void;
   onViewRegCard: (reg: RegistrationEntry) => void;
@@ -30,8 +28,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onAddEvent,
   onUpdateEvent,
   onDeleteEvent,
-  onAddAthlete,
-  onToggleAthleteStatus,
   onUpdateRegStatus,
   onDeleteRegistration,
   onViewRegCard,
@@ -58,7 +54,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Filter states
   const [selectedEventFilter, setSelectedEventFilter] = useState<string>('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
-  const [athleteFilterTab, setAthleteFilterTab] = useState<'active' | 'rest' | 'all'>('active');
+  const [athleteScheduleFilter, setAthleteScheduleFilter] = useState<string>('all');
+  const [athleteGenderFilter, setAthleteGenderFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Delete Confirmation States
@@ -88,22 +85,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Quick stroke manage modal directly for an event
   const [managingStrokesEvent, setManagingStrokesEvent] = useState<SwimmingEvent | null>(null);
 
-  // New Athlete Modal State
-  const [showAthleteModal, setShowAthleteModal] = useState(false);
-  const [newAthName, setNewAthName] = useState('');
-  const [newAthBirth, setNewAthBirth] = useState('');
-  const [newAthGender, setNewAthGender] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
-  const [newAthSchool, setNewAthSchool] = useState('');
-  const [newAthParent, setNewAthParent] = useState('');
-  const [newAthPhone, setNewAthPhone] = useState('');
-  const [newAthSchedule, setNewAthSchedule] = useState('Minggu');
-
   // Stats calculation
   const totalRegistrations = registrations.length;
   const paidRegistrations = registrations.filter(r => r.paymentStatus === 'paid');
   const totalRevenue = paidRegistrations.reduce((acc, curr) => acc + curr.totalAmount, 0);
-  const activeAthletesCount = athletes.filter(a => a.isActive).length;
-  const restAthletesCount = athletes.filter(a => !a.isActive).length;
 
   // Filtered registrations
   const filteredRegs = useMemo(() => {
@@ -122,11 +107,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     });
   }, [registrations, selectedEventFilter, selectedStatusFilter, searchQuery]);
 
-  // Filtered Athletes
+  // Filtered Athletes (Read-only master from official Sheet)
   const filteredAthletes = useMemo(() => {
     return athletes.filter(a => {
-      if (athleteFilterTab === 'active' && !a.isActive) return false;
-      if (athleteFilterTab === 'rest' && a.isActive) return false;
+      if (athleteScheduleFilter !== 'all' && a.trainingSchedule !== athleteScheduleFilter) return false;
+      if (athleteGenderFilter !== 'all' && a.gender !== athleteGenderFilter) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         return (
@@ -137,7 +122,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       }
       return true;
     });
-  }, [athletes, athleteFilterTab, searchQuery]);
+  }, [athletes, athleteScheduleFilter, athleteGenderFilter, searchQuery]);
 
   // Handle adding a manual stroke to the modal list
   const handleAddManualStroke = () => {
@@ -287,29 +272,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
-  const handleSaveAthlete = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newAthName.trim() || !newAthBirth.trim()) return;
-
-    const newId = `ASC.0926.${athletes.length + 1}`.padStart(3, '0');
-    const athlete: Athlete = {
-      id: newId,
-      fullName: newAthName.trim(),
-      birthDate: newAthBirth.trim(),
-      gender: newAthGender,
-      school: newAthSchool.trim() || 'Pandeglang',
-      parentName: newAthParent.trim() || '-',
-      parentPhone: newAthPhone.trim() || '-',
-      trainingSchedule: newAthSchedule,
-      isActive: newAthSchedule.toLowerCase() !== 'rest',
-    };
-
-    onAddAthlete(athlete);
-    setShowAthleteModal(false);
-    setNewAthName('');
-    setNewAthBirth('');
-  };
-
   // Export Excel (.xlsx) rapi & resmi untuk Meet Manager / PRSI
   const handleExportExcel = () => {
     const selectedEventObj = events.find(e => e.id === selectedEventFilter);
@@ -327,7 +289,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             Panel Pengelola Acharya SC
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Kelola event kejuaraan, input manual nomor perlombaan, database atlet aktif/rest, dan verifikasi pendaftaran atlet.
+            Kelola event kejuaraan, input manual nomor perlombaan, database master atlet resmi, dan verifikasi pendaftaran atlet.
           </p>
         </div>
 
@@ -351,16 +313,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             >
               <Plus className="w-4 h-4" />
               <span>Buat Event Baru</span>
-            </button>
-          )}
-
-          {adminTab === 'athletes' && (
-            <button
-              onClick={() => setShowAthleteModal(true)}
-              className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl flex items-center gap-1.5 shadow-xs transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Tambah Atlet Baru</span>
             </button>
           )}
 
@@ -398,12 +350,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <div className="text-xs text-slate-500 font-medium">Database Atlet Aktif</div>
+          <div className="text-xs text-slate-500 font-medium">Database Master Atlet</div>
           <div className="text-xl sm:text-2xl font-black text-blue-600 font-mono mt-1">
-            {activeAthletesCount} <span className="text-xs font-normal text-slate-500 font-sans">siap lomba</span>
+            {athletes.length} <span className="text-xs font-normal text-slate-500 font-sans">atlet aktif</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">
-            {restAthletesCount} Status Rest (non-aktif)
+          <div className="text-[11px] text-emerald-600 font-semibold mt-1">
+            100% Terverifikasi Sheet Klub
           </div>
         </div>
 
@@ -814,36 +766,57 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         </div>
       )}
 
-      {/* TAB 3: MASTER DATA ATLET */}
+      {/* TAB 3: MASTER DATA ATLET (TERKUNCI SESUAI SHEET RESMI) */}
       {adminTab === 'athletes' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          {/* Read-Only Informational Header Banner */}
+          <div className="p-3.5 sm:p-4 bg-blue-50/80 border-b border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Award className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-blue-950 flex items-center gap-1.5">
+                  <span>Master Database Resmi Atlet Acharya SC</span>
+                  <span className="text-[10px] font-semibold bg-blue-200/70 text-blue-900 px-2 py-0.5 rounded-full">
+                    Read-Only
+                  </span>
+                </h4>
+                <p className="text-[11px] text-blue-700 mt-0.5">
+                  Data <b>{athletes.length} atlet aktif</b> disinkronkan langsung dari Google Sheet resmi Acharya SC. Data terkunci permanen untuk menjaga integritas keanggotaan klub.
+                </p>
+              </div>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold shrink-0 self-start sm:self-auto shadow-2xs">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Semua Atlet Aktif</span>
+            </div>
+          </div>
+
           {/* Filter Bar */}
-          <div className="p-4 border-b border-slate-200 bg-slate-50/60 flex flex-col md:flex-row gap-3 items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setAthleteFilterTab('active')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${
-                  athleteFilterTab === 'active' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white border text-slate-600'
-                }`}
+          <div className="p-3 sm:p-4 border-b border-slate-200 bg-slate-50/60 flex flex-col md:flex-row gap-2.5 sm:gap-3 items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+              <select
+                value={athleteScheduleFilter}
+                onChange={(e) => setAthleteScheduleFilter(e.target.value)}
+                className="w-full sm:w-auto px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-blue-500 font-medium"
               >
-                Aktif ({activeAthletesCount})
-              </button>
-              <button
-                onClick={() => setAthleteFilterTab('rest')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${
-                  athleteFilterTab === 'rest' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white border text-slate-600'
-                }`}
+                <option value="all">Semua Jadwal Latihan ({athletes.length})</option>
+                <option value="Minggu">Jadwal Minggu</option>
+                <option value="Sabtu">Jadwal Sabtu</option>
+                <option value="Kamis">Jadwal Kamis</option>
+                <option value="Private">Jadwal Private</option>
+              </select>
+
+              <select
+                value={athleteGenderFilter}
+                onChange={(e) => setAthleteGenderFilter(e.target.value)}
+                className="w-full sm:w-auto px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-blue-500 font-medium"
               >
-                Status Rest ({restAthletesCount})
-              </button>
-              <button
-                onClick={() => setAthleteFilterTab('all')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${
-                  athleteFilterTab === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'bg-white border text-slate-600'
-                }`}
-              >
-                Semua ({athletes.length})
-              </button>
+                <option value="all">Semua Jenis Kelamin</option>
+                <option value="Laki-laki">Putra (Laki-laki)</option>
+                <option value="Perempuan">Putri (Perempuan)</option>
+              </select>
             </div>
 
             <div className="relative w-full md:w-72">
@@ -853,7 +826,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 placeholder="Cari nama atlet, sekolah, ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-blue-500"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-blue-500 font-medium"
               />
             </div>
           </div>
@@ -862,7 +835,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <div className="md:hidden divide-y divide-slate-100 p-2 space-y-2">
             {filteredAthletes.length === 0 ? (
               <div className="py-8 text-center text-slate-400 text-xs">
-                Tidak ada data atlet yang sesuai.
+                Tidak ada data atlet yang sesuai filter.
               </div>
             ) : (
               filteredAthletes.map(ath => {
@@ -870,13 +843,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 return (
                   <div key={ath.id} className="p-3 bg-slate-50/70 rounded-xl border border-slate-200 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                      <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                         {ath.id}
                       </span>
-                      <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        ath.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
-                      }`}>
-                        {ath.isActive ? `Jadwal: ${ath.trainingSchedule}` : 'Rest (Non-aktif)'}
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>Jadwal: {ath.trainingSchedule}</span>
                       </span>
                     </div>
 
@@ -884,23 +856,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       <div>
                         <h4 className="font-extrabold text-slate-900 text-sm">{ath.fullName}</h4>
                         <p className="text-[11px] text-slate-500">
-                          {ath.birthDate} ({stat.age} thn) · {stat.ku}
+                          {ath.birthDate} ({stat.age} thn) · {stat.ku} · {ath.gender}
                         </p>
-                        <p className="text-[11px] text-slate-600 truncate max-w-[200px]">
-                          {ath.school || '-'}
+                        <p className="text-[11px] text-slate-600 truncate max-w-[240px]">
+                          Sekolah: {ath.school || '-'}
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          Ortu: {ath.parentName || '-'} ({ath.parentPhone || '-'})
                         </p>
                       </div>
 
-                      <button
-                        onClick={() => onToggleAthleteStatus(ath.id)}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors shrink-0 min-h-[36px] ${
-                          ath.isActive 
-                            ? 'border-amber-300 text-amber-700 bg-white hover:bg-amber-50' 
-                            : 'border-emerald-400 text-emerald-700 bg-white hover:bg-emerald-50 font-bold'
-                        }`}
-                      >
-                        {ath.isActive ? 'Set Rest' : 'Aktifkan'}
-                      </button>
+                      <div className="text-right">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-white border border-slate-200 text-slate-600 shadow-2xs">
+                          Sheet Resmi
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -914,13 +884,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <thead className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-semibold">
                 <tr>
                   <th className="py-3 px-4">ID Anggota</th>
-                  <th className="py-3 px-4">Nama Atlet</th>
+                  <th className="py-3 px-4">Nama Lengkap Atlet</th>
                   <th className="py-3 px-4">Tgl Lahir / KU</th>
                   <th className="py-3 px-4">Gender</th>
                   <th className="py-3 px-4">Asal Sekolah</th>
                   <th className="py-3 px-4">Jadwal Latihan</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-center">Aksi Toggle</th>
+                  <th className="py-3 px-4 text-center">Status Keanggotaan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -939,25 +908,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       </td>
                       <td className="py-2.5 px-4 text-slate-700">{ath.gender}</td>
                       <td className="py-2.5 px-4 text-slate-600 max-w-[150px] truncate">{ath.school || '-'}</td>
-                      <td className="py-2.5 px-4 font-medium text-slate-800">{ath.trainingSchedule}</td>
-                      <td className="py-2.5 px-4 text-center">
-                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          ath.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
-                        }`}>
-                          {ath.isActive ? 'Aktif' : 'Rest (Non-aktif)'}
+                      <td className="py-2.5 px-4 font-medium text-slate-800">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 font-semibold text-slate-700">
+                          {ath.trainingSchedule}
                         </span>
                       </td>
                       <td className="py-2.5 px-4 text-center">
-                        <button
-                          onClick={() => onToggleAthleteStatus(ath.id)}
-                          className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg border transition-colors ${
-                            ath.isActive 
-                              ? 'border-amber-300 text-amber-700 hover:bg-amber-50' 
-                              : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
-                          }`}
-                        >
-                          {ath.isActive ? 'Jadikan Rest' : 'Aktifkan'}
-                        </button>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Aktif Terverifikasi</span>
+                        </span>
                       </td>
                     </tr>
                   );
@@ -1376,117 +1336,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   className="px-5 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md shadow-blue-600/20"
                 >
                   Simpan Event & Nomor Lomba
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: ADD ATHLETE */}
-      {showAthleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-900 mb-4 font-serif">Tambah Data Atlet Acharya SC</h3>
-            <form onSubmit={handleSaveAthlete} className="space-y-3 text-xs">
-              <div>
-                <label className="block font-medium text-slate-700 mb-1">Nama Lengkap Atlet</label>
-                <input
-                  type="text"
-                  required
-                  value={newAthName}
-                  onChange={(e) => setNewAthName(e.target.value)}
-                  placeholder="Nama lengkap atlet..."
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-medium text-slate-700 mb-1">Tanggal Lahir (DD/MM/YYYY)</label>
-                  <input
-                    type="text"
-                    required
-                    value={newAthBirth}
-                    onChange={(e) => setNewAthBirth(e.target.value)}
-                    placeholder="Contoh: 15/05/2015"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium text-slate-700 mb-1">Jenis Kelamin</label>
-                  <select
-                    value={newAthGender}
-                    onChange={(e) => setNewAthGender(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="Laki-laki">Laki-laki</option>
-                    <option value="Perempuan">Perempuan</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-medium text-slate-700 mb-1">Jadwal Latihan (Keterangan Aktif)</label>
-                <select
-                  value={newAthSchedule}
-                  onChange={(e) => setNewAthSchedule(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
-                >
-                  <option value="Minggu">Minggu (Aktif)</option>
-                  <option value="Sabtu">Sabtu (Aktif)</option>
-                  <option value="Kamis">Kamis (Aktif)</option>
-                  <option value="Private">Private (Aktif)</option>
-                  <option value="Rest">Rest (Tidak Aktif)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-medium text-slate-700 mb-1">Asal Sekolah</label>
-                <input
-                  type="text"
-                  value={newAthSchool}
-                  onChange={(e) => setNewAthSchool(e.target.value)}
-                  placeholder="Contoh: SDN Saruni 1 Pandeglang"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-medium text-slate-700 mb-1">Nama Orang Tua</label>
-                  <input
-                    type="text"
-                    value={newAthParent}
-                    onChange={(e) => setNewAthParent(e.target.value)}
-                    placeholder="Nama bapak/ibu"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium text-slate-700 mb-1">No WhatsApp</label>
-                  <input
-                    type="text"
-                    value={newAthPhone}
-                    onChange={(e) => setNewAthPhone(e.target.value)}
-                    placeholder="08xxxxxxxx"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAthleteModal(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700"
-                >
-                  Simpan Atlet
                 </button>
               </div>
             </form>

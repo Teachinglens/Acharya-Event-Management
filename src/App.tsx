@@ -13,8 +13,6 @@ import {
   subscribeRegistrations, 
   syncSaveEvent, 
   syncDeleteEvent, 
-  syncSaveAthlete, 
-  syncToggleAthleteStatus, 
   syncSaveRegistration, 
   syncUpdateRegStatus, 
   syncDeleteRegistration,
@@ -43,8 +41,7 @@ export default function App() {
   });
 
   const [athletes, setAthletes] = useState<Athlete[]>(() => {
-    const saved = localStorage.getItem('asc_athletes');
-    return saved ? JSON.parse(saved) : RAW_ATHLETE_DATA;
+    return RAW_ATHLETE_DATA;
   });
 
   const [registrations, setRegistrations] = useState<RegistrationEntry[]>(() => {
@@ -140,37 +137,6 @@ export default function App() {
     }
   };
 
-  const handleAddAthlete = async (ath: Athlete) => {
-    setAthletes(prev => [ath, ...prev]);
-    try {
-      await syncSaveAthlete(ath);
-    } catch (err) {
-      console.error('Failed to sync new athlete to cloud:', err);
-    }
-  };
-
-  const handleToggleAthleteStatus = async (id: string) => {
-    let nextStatus = true;
-    setAthletes(prev =>
-      prev.map(a => {
-        if (a.id === id) {
-          nextStatus = !a.isActive;
-          return {
-            ...a,
-            isActive: nextStatus,
-            trainingSchedule: nextStatus ? 'Minggu' : 'Rest'
-          };
-        }
-        return a;
-      })
-    );
-    try {
-      await syncToggleAthleteStatus(id, nextStatus);
-    } catch (err) {
-      console.error('Failed to sync athlete status to cloud:', err);
-    }
-  };
-
   const handleUpdateRegStatus = async (regId: string, status: 'paid' | 'pending' | 'cancelled') => {
     setRegistrations(prev =>
       prev.map(r => {
@@ -262,8 +228,6 @@ export default function App() {
               onAddEvent={handleAddEvent}
               onUpdateEvent={handleUpdateEvent}
               onDeleteEvent={handleDeleteEvent}
-              onAddAthlete={handleAddAthlete}
-              onToggleAthleteStatus={handleToggleAthleteStatus}
               onUpdateRegStatus={handleUpdateRegStatus}
               onDeleteRegistration={handleDeleteRegistration}
               onViewRegCard={(reg) => setViewingCardReg(reg)}
