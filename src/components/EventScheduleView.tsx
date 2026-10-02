@@ -66,6 +66,19 @@ export const EventScheduleView: React.FC<EventScheduleViewProps> = ({
                   {evt.title}
                 </h3>
 
+                <div className="mt-2 flex items-center gap-1.5 text-[11px] text-sky-800">
+                  <Award className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                  <span className="font-medium">
+                    Tahun Lahir: {evt.minBirthYear && evt.maxBirthYear
+                      ? `${evt.minBirthYear} - ${evt.maxBirthYear}`
+                      : evt.minBirthYear
+                      ? `≥ ${evt.minBirthYear}`
+                      : evt.maxBirthYear
+                      ? `≤ ${evt.maxBirthYear}`
+                      : 'Semua Tahun Lahir'}
+                  </span>
+                </div>
+
                 <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                   <span className="truncate max-w-[150px]">{evt.venuePool}</span>
                   <span className="font-mono text-blue-900 font-semibold">{formatRupiah(evt.feePerStroke)}/no</span>
@@ -97,31 +110,47 @@ export const EventScheduleView: React.FC<EventScheduleViewProps> = ({
             </div>
 
             {/* Info Cards Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="bg-blue-50/60 p-3 rounded-xl border border-blue-100/60">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+              <div className="bg-sky-50/70 p-3 rounded-2xl border border-sky-100">
                 <span className="text-slate-500 block text-[11px]">Tanggal Lomba:</span>
                 <div className="font-bold text-slate-900 mt-0.5 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                  <Calendar className="w-3.5 h-3.5 text-sky-600" />
                   <span>{activeEvent.eventDate}</span>
                 </div>
               </div>
 
-              <div className="bg-blue-50/60 p-3 rounded-xl border border-blue-100/60">
+              <div className="bg-sky-50/70 p-3 rounded-2xl border border-sky-100">
                 <span className="text-slate-500 block text-[11px]">Batas Pendaftaran:</span>
-                <div className="font-bold text-red-600 mt-0.5 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />
+                <div className="font-bold text-amber-700 mt-0.5 flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
                   <span>{activeEvent.registrationDeadline}</span>
                 </div>
               </div>
 
-              <div className="bg-blue-50/60 p-3 rounded-xl border border-blue-100/60">
+              <div className="bg-sky-50/70 p-3 rounded-2xl border border-sky-100">
+                <span className="text-slate-500 block text-[11px]">Tahun Lahir:</span>
+                <div className="font-bold text-sky-900 mt-0.5 flex items-center gap-1">
+                  <Award className="w-3.5 h-3.5 text-sky-600" />
+                  <span>
+                    {activeEvent.minBirthYear && activeEvent.maxBirthYear
+                      ? `${activeEvent.minBirthYear} - ${activeEvent.maxBirthYear}`
+                      : activeEvent.minBirthYear
+                      ? `≥ ${activeEvent.minBirthYear}`
+                      : activeEvent.maxBirthYear
+                      ? `≤ ${activeEvent.maxBirthYear}`
+                      : 'Semua Usia'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-sky-50/70 p-3 rounded-2xl border border-sky-100">
                 <span className="text-slate-500 block text-[11px]">Tarif per Nomor:</span>
-                <div className="font-mono font-bold text-blue-800 mt-0.5">
+                <div className="font-mono font-bold text-sky-800 mt-0.5">
                   {formatRupiah(activeEvent.feePerStroke)}
                 </div>
               </div>
 
-              <div className="bg-blue-50/60 p-3 rounded-xl border border-blue-100/60">
+              <div className="bg-sky-50/70 p-3 rounded-2xl border border-sky-100">
                 <span className="text-slate-500 block text-[11px]">Akomodasi Pelatih:</span>
                 <div className="font-mono font-bold text-slate-800 mt-0.5">
                   {formatRupiah(activeEvent.coachAccommodationFee)}

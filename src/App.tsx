@@ -184,7 +184,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-sky-50/70 via-blue-50/30 to-slate-50 text-slate-800 font-sans selection:bg-sky-500 selection:text-white">
       {/* Top Bar Navigation */}
       <Navbar
         activeTab={activeTab}
@@ -200,8 +200,10 @@ export default function App() {
           <RegistrationForm
             events={events}
             athletes={athletes}
+            registrations={registrations}
             onCompleteRegistration={handleCompleteRegistration}
             onSelectEventView={(id) => setActiveTab('events')}
+            onViewInvoice={(reg) => setViewingCardReg(reg)}
           />
         )}
 
@@ -235,7 +237,7 @@ export default function App() {
             />
           ) : (
             <div className="max-w-md mx-auto py-16 px-4 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-700 mx-auto flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-3xl bg-sky-100 text-sky-700 mx-auto flex items-center justify-center mb-4 shadow-sm">
                 <Shield className="w-8 h-8" />
               </div>
               <h2 className="text-xl font-bold text-slate-900 font-serif">Akses Panel Pengurus Terkunci</h2>
@@ -244,7 +246,7 @@ export default function App() {
               </p>
               <button
                 onClick={() => setShowAdminLogin(true)}
-                className="mt-6 px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-600/20 transition-all inline-flex items-center gap-2"
+                className="mt-6 px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 rounded-2xl shadow-md shadow-sky-500/20 transition-all inline-flex items-center gap-2 cursor-pointer"
               >
                 <span>Buka Kunci Akses Admin (PIN)</span>
               </button>
@@ -255,7 +257,7 @@ export default function App() {
 
       {/* Modal: Official Registration Invoice & Card View */}
       {viewingCardReg && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto">
           <div className="w-full max-w-2xl my-6">
             <RegistrationCard
               registration={viewingCardReg}
@@ -276,16 +278,16 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="bg-white border-t border-blue-100 py-6 text-xs text-slate-500">
+      <footer className="bg-white/80 border-t border-sky-100 py-6 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <div className="flex items-center gap-2">
-            <Waves className="w-4 h-4 text-blue-600" />
-            <span className="font-semibold text-slate-800">Acharya Swimming Club Pandeglang</span>
+            <Waves className="w-4 h-4 text-sky-600" />
+            <span className="font-bold text-slate-800">Acharya Swimming Club Pandeglang</span>
             <span>·</span>
-            <span>Master Pendaftaran Kejuaraan Resmi</span>
+            <span className="text-sky-700">Semangat Juara Renang Banten 🌟</span>
           </div>
           <div>
-            Data Atlet Aktif Terverifikasi · Sistem Gateway QRIS & VA Terintegrasi
+            Data 89 Atlet Aktif Resmi Terverifikasi · Real-time Cloud Firestore
           </div>
         </div>
       </footer>

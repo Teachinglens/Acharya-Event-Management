@@ -21,6 +21,8 @@ export interface SwimmingEvent {
   coachAccommodationFee: number; // e.g. 150000
   status: 'Buka' | 'Segera Ditutup' | 'Tutup' | 'Selesai';
   bannerUrl?: string;
+  minBirthYear?: number; // e.g. 2010 (Tahun lahir tertua yang diperbolehkan)
+  maxBirthYear?: number; // e.g. 2018 (Tahun lahir termuda yang diperbolehkan)
   availableStrokes: EventStroke[];
   notes?: string;
 }

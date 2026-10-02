@@ -13,6 +13,8 @@ export const INITIAL_EVENTS: SwimmingEvent[] = [
     feePerStroke: 75000,
     coachAccommodationFee: 150000,
     status: 'Buka',
+    minBirthYear: 2008,
+    maxBirthYear: 2018,
     notes: 'Kualifikasi resmi Kejurda & Porprov. Setiap atlet wajib mendaftar melalui pelatih kepala Acharya SC.',
     availableStrokes: [
       { id: 'S1', name: '50m Gaya Bebas', stroke: 'Bebas', distance: 50 },
@@ -37,6 +39,8 @@ export const INITIAL_EVENTS: SwimmingEvent[] = [
     feePerStroke: 60000,
     coachAccommodationFee: 100000,
     status: 'Buka',
+    minBirthYear: 2009,
+    maxBirthYear: 2019,
     notes: 'Khusus nomor sprint (50m & 100m) untuk KU V s/d Senior dan KU Pemula Fun Swim.',
     availableStrokes: [
       { id: 'PS1', name: '50m Gaya Bebas', stroke: 'Bebas', distance: 50 },
@@ -59,6 +63,8 @@ export const INITIAL_EVENTS: SwimmingEvent[] = [
     feePerStroke: 70000,
     coachAccommodationFee: 175000,
     status: 'Segera Ditutup',
+    minBirthYear: 2012,
+    maxBirthYear: 2018,
     notes: 'Ajang bergengsi usia dini KU III, KU IV, dan KU V.',
     availableStrokes: [
       { id: 'JS1', name: '50m Gaya Dada', stroke: 'Dada', distance: 50 },

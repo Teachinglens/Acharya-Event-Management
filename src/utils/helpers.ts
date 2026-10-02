@@ -66,6 +66,50 @@ export function calculateAgeAndKU(birthDateStr: string, referenceDateStr?: strin
   return { age: Math.max(0, age), ku, birthDateFormatted };
 }
 
+export function getBirthYear(birthDateStr: string): number {
+  if (!birthDateStr) return 0;
+  if (birthDateStr.includes('/')) {
+    const parts = birthDateStr.split('/');
+    if (parts.length >= 3) return parseInt(parts[2], 10) || 0;
+  } else if (birthDateStr.includes('-')) {
+    const parts = birthDateStr.split('-');
+    if (parts.length >= 3) {
+      if (parts[0].length === 4) return parseInt(parts[0], 10) || 0;
+      return parseInt(parts[2], 10) || 0;
+    }
+  }
+  return 0;
+}
+
+export function isAthleteEligibleForEvent(
+  athleteBirthDate: string,
+  minYear?: number,
+  maxYear?: number
+): { eligible: boolean; athleteYear: number; reason?: string } {
+  const athleteYear = getBirthYear(athleteBirthDate);
+  if (!athleteYear || (!minYear && !maxYear)) {
+    return { eligible: true, athleteYear };
+  }
+
+  if (minYear && athleteYear < minYear) {
+    return {
+      eligible: false,
+      athleteYear,
+      reason: `Tahun lahir (${athleteYear}) lebih tua dari batas minimal (${minYear})`
+    };
+  }
+
+  if (maxYear && athleteYear > maxYear) {
+    return {
+      eligible: false,
+      athleteYear,
+      reason: `Tahun lahir (${athleteYear}) lebih muda dari batas maksimal (${maxYear})`
+    };
+  }
+
+  return { eligible: true, athleteYear };
+}
+
 export function generatePaymentRef(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let result = 'ASC-';

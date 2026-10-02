@@ -75,6 +75,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [newEventAccommodation, setNewEventAccommodation] = useState<number>(150000);
   const [newEventStatus, setNewEventStatus] = useState<'Buka' | 'Segera Ditutup' | 'Tutup' | 'Selesai'>('Buka');
   const [newEventNotes, setNewEventNotes] = useState('');
+  const [newEventMinBirthYear, setNewEventMinBirthYear] = useState<number | ''>(2010);
+  const [newEventMaxBirthYear, setNewEventMaxBirthYear] = useState<number | ''>(2018);
   
   // Event Strokes state (Input Manual Nomor Perlombaan)
   const [currentEventStrokes, setCurrentEventStrokes] = useState<EventStroke[]>([]);
@@ -201,6 +203,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         coachAccommodationFee: Number(newEventAccommodation),
         status: newEventStatus,
         notes: newEventNotes,
+        minBirthYear: newEventMinBirthYear !== '' ? Number(newEventMinBirthYear) : undefined,
+        maxBirthYear: newEventMaxBirthYear !== '' ? Number(newEventMaxBirthYear) : undefined,
         availableStrokes: strokesToSave,
       };
       onUpdateEvent(updated);
@@ -217,6 +221,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         coachAccommodationFee: Number(newEventAccommodation),
         status: newEventStatus,
         notes: newEventNotes,
+        minBirthYear: newEventMinBirthYear !== '' ? Number(newEventMinBirthYear) : undefined,
+        maxBirthYear: newEventMaxBirthYear !== '' ? Number(newEventMaxBirthYear) : undefined,
         availableStrokes: strokesToSave,
       };
       onAddEvent(newEvt);
@@ -238,6 +244,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setNewEventAccommodation(evt.coachAccommodationFee);
     setNewEventStatus(evt.status);
     setNewEventNotes(evt.notes || '');
+    setNewEventMinBirthYear(evt.minBirthYear !== undefined ? evt.minBirthYear : '');
+    setNewEventMaxBirthYear(evt.maxBirthYear !== undefined ? evt.maxBirthYear : '');
     setCurrentEventStrokes(evt.availableStrokes || []);
     setShowEventModal(true);
   };
@@ -254,6 +262,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setNewEventAccommodation(150000);
     setNewEventStatus('Buka');
     setNewEventNotes('');
+    setNewEventMinBirthYear(2010);
+    setNewEventMaxBirthYear(2018);
     setCurrentEventStrokes([
       { id: 'st1', name: '50m Gaya Bebas', stroke: 'Bebas', distance: 50 },
       { id: 'st2', name: '100m Gaya Bebas', stroke: 'Bebas', distance: 100 },
@@ -729,6 +739,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         <span className="text-slate-400">Venue Kolam:</span>
                         <span className="text-right truncate max-w-[160px] font-medium">{evt.venuePool}</span>
                       </div>
+                      <div className="flex justify-between items-center pt-1 border-t border-slate-200/60">
+                        <span className="text-slate-500 font-medium">Tahun Lahir:</span>
+                        <span className="font-semibold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                          {evt.minBirthYear && evt.maxBirthYear
+                            ? `${evt.minBirthYear} - ${evt.maxBirthYear}`
+                            : evt.minBirthYear
+                            ? `≥ ${evt.minBirthYear}`
+                            : evt.maxBirthYear
+                            ? `≤ ${evt.maxBirthYear}`
+                            : 'Semua Tahun Lahir'}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="mt-3">
@@ -1114,6 +1136,87 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       onChange={(e) => setNewEventDeadline(e.target.value)}
                       className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 bg-white"
                     />
+                  </div>
+                </div>
+
+                {/* Tahun Lahir yang Bisa Mengikuti Lomba */}
+                <div className="p-3.5 bg-sky-50/80 rounded-2xl border border-sky-100 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block font-bold text-sky-950 text-xs flex items-center gap-1.5">
+                      <span>🏊 Tahun Lahir Peserta (Batasan Usia Lomba)</span>
+                    </label>
+                    <span className="text-[10px] text-sky-700 font-semibold bg-white px-2 py-0.5 rounded-full border border-sky-200 shadow-2xs">
+                      {newEventMinBirthYear || newEventMaxBirthYear
+                        ? `Kelahiran ${newEventMinBirthYear || '...'} s/d ${newEventMaxBirthYear || '...'}`
+                        : 'Semua Tahun Lahir (Bebas)'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-sky-800">
+                    Tentukan rentang tahun lahir atlet yang diperbolehkan mendaftar. Sistem akan otomatis memvalidasi kelayakan atlet saat pendaftaran.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Tahun Lahir Min (Paling Tua)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="Contoh: 2010"
+                        min="2000"
+                        max="2030"
+                        value={newEventMinBirthYear}
+                        onChange={(e) => setNewEventMinBirthYear(e.target.value ? Number(e.target.value) : '')}
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-sky-500 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Tahun Lahir Maks (Paling Muda)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="Contoh: 2018"
+                        min="2000"
+                        max="2030"
+                        value={newEventMaxBirthYear}
+                        onChange={(e) => setNewEventMaxBirthYear(e.target.value ? Number(e.target.value) : '')}
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-sky-500 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quick Presets */}
+                  <div className="flex items-center gap-1.5 pt-1 flex-wrap">
+                    <span className="text-[10px] text-slate-500 font-medium">Pilihan Cepat:</span>
+                    <button
+                      type="button"
+                      onClick={() => { setNewEventMinBirthYear(2010); setNewEventMaxBirthYear(2018); }}
+                      className="px-2 py-0.5 text-[10px] font-medium bg-white hover:bg-sky-100 text-sky-800 border border-sky-200 rounded-md transition-colors"
+                    >
+                      2010 - 2018
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setNewEventMinBirthYear(2012); setNewEventMaxBirthYear(2019); }}
+                      className="px-2 py-0.5 text-[10px] font-medium bg-white hover:bg-sky-100 text-sky-800 border border-sky-200 rounded-md transition-colors"
+                    >
+                      2012 - 2019
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setNewEventMinBirthYear(2015); setNewEventMaxBirthYear(2021); }}
+                      className="px-2 py-0.5 text-[10px] font-medium bg-white hover:bg-sky-100 text-sky-800 border border-sky-200 rounded-md transition-colors"
+                    >
+                      2015 - 2021 (Usia Dini)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setNewEventMinBirthYear(''); setNewEventMaxBirthYear(''); }}
+                      className="px-2 py-0.5 text-[10px] font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-md transition-colors"
+                    >
+                      Semua Usia (Bebas)
+                    </button>
                   </div>
                 </div>
 
